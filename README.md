@@ -7,7 +7,7 @@ Since this library is hosted on a public repository (not npm), you can use it in
 Clone the library repository to a folder on your computer (e.g., next to your main project).
 
 ```bash
-git clone <REPOSITORY_URL> react-dynamic-text-translation-ui-component
+git clone https://github.com/adh-arsh/react-dynamic-text-translation-ui-library.git
 cd react-dynamic-text-translation-ui-component
 ```
 
