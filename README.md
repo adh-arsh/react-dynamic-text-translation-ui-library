@@ -1,33 +1,77 @@
-# React Dynamic Text Translation UI Component
+# Integration Guide
 
-A React library for real-time text translation with caching and overflow handling support.
+Since this library is hosted on a public repository (not npm), you can use it in your project by cloning it locally.
 
-## Installation
+## Step 1: Clone the Repository
+
+Clone the library repository to a folder on your computer (e.g., next to your main project).
 
 ```bash
-npm install react-dynamic-text-translation-ui-component
-# or
-yarn add react-dynamic-text-translation-ui-component
+git clone <REPOSITORY_URL> react-dynamic-text-translation-ui-component
+cd react-dynamic-text-translation-ui-component
 ```
 
-## Setup
+## Step 2: Build the Library
 
-Wrap your application with `TranslationProvider` and provide the configuration.
+Before you can use it, you need to build the library to generate the necessary files.
+
+```bash
+npm install
+npm run build
+```
+
+*Note: You should see a `dist` folder created after the build completes.*
+
+## Step 3: Install in Your Project
+
+Now, go to your main project directory (where you want to use the translation library).
+
+```bash
+cd ../my-app
+```
+
+Install the library using the local path:
+
+```bash
+npm install ../react-dynamic-text-translation-ui-component
+# OR if you are using yarn
+yarn add file:../react-dynamic-text-translation-ui-component
+```
+
+*Make sure the path `../react-dynamic-text-translation-ui-component` points correctly to where you cloned the library.*
+
+## Step 4: Setup Provider
+
+In your project's root file (e.g., `src/App.tsx` or `src/main.tsx`), wrap your app with the `TranslationProvider`.
 
 ```tsx
 import { TranslationProvider, TranslationConfig } from 'react-dynamic-text-translation-ui-component';
-import 'react-dynamic-text-translation-ui-component/style.css'; // Import styles for marquee effect
+// IMPORTANT: Don't forget to import the styles!
+import 'react-dynamic-text-translation-ui-component/style.css';
 
 const config: TranslationConfig = {
-  apiUrl: 'http://localhost:9001', // Your translation API endpoint
+  // Option A: Use your own backend
+  // apiUrl: 'http://localhost:9001',
+  
+  // Option B: Use Google Translate directly
+  apiUrl: 'https://translation.googleapis.com/language/translate/v2',
+  apiKey: 'YOUR_GOOGLE_API_KEY',
+  translateFn: async (text, targetLanguage, apiUrl, apiKey) => {
+    // Custom logic to call Google API
+    const response = await fetch(`${apiUrl}?key=${apiKey}`, {
+      method: 'POST',
+      body: JSON.stringify({ q: text, target: targetLanguage, format: 'text' })
+    });
+    const data = await response.json();
+    return data.data.translations[0].translatedText;
+  },
+ // Reference for language codes: https://cloud.google.com/translate/docs/languages or use your translation API specific codes
   supportedLanguages: [
     { code: 'en', name: 'English' },
     { code: 'es', name: 'Spanish' },
-    { code: 'fr', name: 'French' },
+    // Add more languages...
   ],
   defaultLanguage: 'en',
-  defaultNoCache: false, // Optional: Disable caching globally by default
-  storageKey: 'my_app_language', // Optional: Custom localStorage key
 };
 
 function App() {
@@ -39,53 +83,81 @@ function App() {
 }
 ```
 
-## Usage
+## Step 5: Start Translating
 
-### TextTranslator Component
+Now you can use the components anywhere in your app!
 
-Use `TextTranslator` to wrap text that should be translated.
-
+### Translate Text
 ```tsx
 import { TextTranslator } from 'react-dynamic-text-translation-ui-component';
 
-// Basic usage
+// Basic translation
 <TextTranslator text="Hello World" />
 
-// With overflow handling (truncate)
-<TextTranslator text="Long text..." truncate={true} className="max-w-xs" />
+// With truncation (shows ellipsis)
+<TextTranslator 
+  text="This is a very long text that will be truncated" 
+  truncate={true} 
+  className="max-w-xs" 
+/>
 
-// With marquee effect (auto-scroll)
-<TextTranslator text="Very long text..." enableMarquee={true} />
+// With marquee scrolling (default speed: 10s)
+<TextTranslator 
+  text="This is a very long text that will scroll continuously" 
+  enableMarquee={true} 
+/>
 
-// With custom marquee speed (in seconds, default: 10)
-<TextTranslator text="Very long text..." enableMarquee={true} marqueeSpeed={5} />
-
-// Disable caching for this specific instance
-<TextTranslator text="Dynamic text" noCache={true} />
+// With custom marquee speed (5s = faster, 20s = slower)
+<TextTranslator 
+  text="Fast scrolling text" 
+  enableMarquee={true} 
+  marqueeSpeed={5} 
+/>
 ```
-```
 
-### TextTranslator Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `text` | `string` | required | The text to translate |
-| `className` | `string` | `''` | Additional CSS classes |
-| `as` | `React.ElementType` | `'span'` | HTML element to render as |
-| `enableScroll` | `boolean` | `false` | Enable horizontal scroll for overflow |
-| `enableTooltip` | `boolean` | `true` | Show tooltip on hover if text is truncated |
-| `truncate` | `boolean` | `false` | Use ellipsis for truncation |
-| `enableMarquee` | `boolean` | `false` | Enable continuous auto-scrolling for overflow |
-| `marqueeSpeed` | `number` | `10` | Animation duration in seconds (lower = faster) |
-| `noCache` | `boolean` | `false` | Disable caching for this specific translation |
-
-### LanguageSwitcher Component
-
+### Switch Languages
 ```tsx
 import { LanguageSwitcher } from 'react-dynamic-text-translation-ui-component';
 
-// Icon variant (floating globe)
 <LanguageSwitcher variant="icon" />
+```
 
-// Text variant (dropdown)
-<LanguageSwitcher variant="text" />
+### Use Hook (for attributes)
+```tsx
+import { useTranslation } from 'react-dynamic-text-translation-ui-component';
+
+const { translatedText } = useTranslation('Placeholder text');
+<input placeholder={translatedText} />
+```
+
+## Advanced Features
+
+### Marquee Speed Control
+
+The `marqueeSpeed` prop controls how fast the text scrolls (in seconds). Lower values = faster scrolling.
+
+```tsx
+// Fast scrolling (5 seconds)
+<TextTranslator text="Fast text" enableMarquee={true} marqueeSpeed={5} />
+
+// Normal scrolling (10 seconds - default)
+<TextTranslator text="Normal text" enableMarquee={true} />
+
+// Slow scrolling (20 seconds)
+<TextTranslator text="Slow text" enableMarquee={true} marqueeSpeed={20} />
+```
+
+### Tooltip Behavior
+
+Tooltips automatically appear when hovering over truncated or marquee text:
+- Positioned above the text with proper z-index layering
+- Pauses marquee animation on hover
+- Shows full text content
+
+## Troubleshooting
+
+-   **Styles missing?** Ensure you imported `'react-dynamic-text-translation-ui-component/style.css'` in your root file.
+-   **Type errors?** Try restarting your VS Code or TypeScript server after installing the local package.
+-   **Updates not showing?** If you modify the library code, remember to run `npm run build` in the library folder again, and potentially reinstall it in your app.
+-   **Marquee not working?** Make sure the text is long enough to overflow the container width.
+-   **Tooltip not showing?** Ensure `enableTooltip` is not set to `false` (it's `true` by default).
